@@ -14,10 +14,10 @@ func (r *mutationResolver) CreatePost(ctx context.Context, input NewPost) (*doma
 		CommentsAllowed: *input.CommentsEnabled, // Обработать nullable
 	}
 
-	err := r.generated.CreatePost(post)
+	err := r.Storage.CreatePost(post)
 	return post, err
 }
 
 func (r *queryResolver) Posts(ctx context.Context, limit int, offset int) ([]*domain.Post, error) {
-	return r.generated.GetPosts(limit, offset)
+	return r.Storage.GetPosts(limit, offset)
 }
