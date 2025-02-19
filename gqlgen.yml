@@ -2,8 +2,8 @@ schema:
   - schema/*.graphqls
 
 exec:
-  package: generated
   filename: internal/graph/generated/generated.go
+  package: generated
 
 model:
   filename: internal/graph/model/models_gen.go 
@@ -11,37 +11,46 @@ model:
 
 resolver:
   layout: follow-schema
-  dir: internal/graph
+  dir: internal/graph/resolvers
   package: resolvers
   filename_template: "{name}.resolvers.go"
+  omit_template_comment: false
 
-  
-call_argument_directives_with_null: true
 
 autobind:
-  - github.com/your-project/internal/graph/model
-  - github.com/google/uuid
-  - time
+  - github.com/riddion72/ozon_test/internal/domain
 
 models:
   ID:
     model:
       - github.com/99designs/gqlgen/graphql.ID
-  UUID:
+  Int:
     model:
-      - github.com/google/uuid.UUID
+      - github.com/99designs/gqlgen/graphql.Int
   Time:
     model:
-      - time.Time
+      - github.com/99designs/gqlgen/graphql.Time
   Post:
-    model: github.com/your-project/internal/storage.Post
+    model: github.com/riddion72/ozon_test/internal/domain.Post
+    fields:
+      user:
+        resolver: true
   Comment:
-    model: github.com/your-project/internal/storage.Comment
+    model: github.com/riddion72/ozon_test/internal/domain.Comment
+    fields:
+      user:
+        resolver: true
+      postId:
+        resolver: true
+      parentId:
+        resolver: true
 
 struct_tag: json
+omit_gqlgen_file_notice: false
+omit_gqlgen_version_in_file_notice: false
+call_argument_directives_with_null: true
+omit_slice_element_pointers: true
 
-directives:
-  validation:
-    skipRuntime: true
-
-query_complexity_limit: 1000
+# directives:
+#   validation:
+#     skipRuntime: true

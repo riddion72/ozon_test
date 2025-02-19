@@ -1,10 +1,12 @@
+scalar Time
+
 type Post {
   id: ID!
   title: String!
   user: String!
   content: String!
   commentsAllowed: Boolean!
-  created_at: Time!
+  createdAt: Time!
 }
 
 type Comment {
