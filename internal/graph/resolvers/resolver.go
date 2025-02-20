@@ -1,19 +1,22 @@
 package resolvers
 
 import (
-	"github.com/riddion72/ozon_test/internal/storage"
+	"github.com/riddion72/ozon_test/internal/service"
 )
 
+// Resolver корневая структура для всех резолверов
 type Resolver struct {
-	PostStorage    storage.PostStorage
-	CommentStorage storage.CommentStorage
-	Subscriptions  *SubscriptionManager
+	services *service.Services
 }
 
-// в resolvers.go
+// NewResolver конструктор для Resolver
+func NewResolver(services *service.Services) *Resolver {
+	return &Resolver{services: services}
+}
+
 func (r *Resolver) Complexity() graphql.ComplexityRoot {
 	return graphql.ComplexityRoot{
-		// Пример: ограничить глубину вложенности комментариев
+		// ограничить глубину вложенности комментариев
 		Comment: func(childComplexity int) int {
 			return childComplexity * 2 // Множитель сложности для вложенных комментариев
 		},

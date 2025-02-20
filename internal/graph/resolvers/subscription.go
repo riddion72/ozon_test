@@ -6,10 +6,6 @@ import (
 	"github.com/riddion72/ozon_test/internal/domain"
 )
 
-type subscriptionResolver struct {
-	services *service.Services
-}
-
 func (r *subscriptionResolver) CommentAdded(ctx context.Context, postID string) (<-chan *domain.Comment, error) {
 	ch := make(chan *domain.Comment, 1)
 

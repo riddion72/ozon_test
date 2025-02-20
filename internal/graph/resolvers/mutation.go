@@ -5,20 +5,14 @@ import (
 	"errors"
 
 	"github.com/riddion72/ozon_test/internal/domain"
-	"github.com/riddion72/ozon_test/internal/service/"
+	"github.com/riddion72/ozon_test/internal/graph/model"
 )
 
-type mutationResolver struct {
-	services *service.Services
-}
-
-func (r *mutationResolver) CreatePost(ctx context.Context, input NewPost) (*domain.Post, error) {
+func (r *mutationResolver) CreatePost(ctx context.Context, input model.NewPost) (*domain.Post, error) {
 	post := domain.Post{
-		ID:              generateID(),
-		Title:           input.Title,
-		User:            input.User,
-		Content:         input.Content,
-		CommentsAllowed: input.CommentsEnabled,
+		Title:   input.Title,
+		User:    input.User,
+		Content: input.Content,
 	}
 
 	if err := r.services.Posts.Create(post); err != nil {
@@ -27,8 +21,8 @@ func (r *mutationResolver) CreatePost(ctx context.Context, input NewPost) (*doma
 	return &post, nil
 }
 
-func (r *mutationResolver) CreateComment(ctx context.Context, input NewComment) (*domain.Comment, error) {
-	post, exists := r.services.Posts.GetByID(input.PostId)
+func (r *mutationResolver) CreateComment(ctx context.Context, input model.NewComment) (*domain.Comment, error) {
+	post, exists := r.services.Posts.GetByID(input.PostID)
 	if !exists {
 		return nil, errors.New("post not found")
 	}
@@ -42,9 +36,8 @@ func (r *mutationResolver) CreateComment(ctx context.Context, input NewComment) 
 	}
 
 	comment := domain.Comment{
-		ID:       generateID(),
-		PostID:   input.PostId,
-		ParentID: input.ParentId,
+		PostID:   input.PostID,
+		ParentID: input.ParentID,
 		User:     input.User,
 		Text:     input.Text,
 	}

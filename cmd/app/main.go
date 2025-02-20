@@ -9,12 +9,10 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
-	"time"
 
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/handler/extension"
 	"github.com/99designs/gqlgen/graphql/playground"
-	"github.com/jmoiron/sqlx"
 
 	"github.com/riddion72/ozon_test/internal/config"
 	// "github.com/riddion72/ozon_test/internal/graph"
@@ -22,8 +20,6 @@ import (
 	"github.com/riddion72/ozon_test/internal/logger"
 	"github.com/riddion72/ozon_test/internal/service"
 	"github.com/riddion72/ozon_test/internal/storage"
-	"github.com/riddion72/ozon_test/internal/storage/inmemory"
-	"github.com/riddion72/ozon_test/internal/storage/postgres"
 )
 
 func main() {
@@ -39,37 +35,8 @@ func main() {
 	logger.MustInit(cfg.Logger.Level)
 	logger.Info("Starting application", slog.String("version", "1.0.0"))
 
-	// Инициализация репозиториев
-	var postRepo storage.PostStorage
-	var commentRepo storage.CommentStorage
-	var db *sqlx.DB
-
-	if cfg.DB.Host != "" {
-		// Подключение к PostgreSQL с повторами
-		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-		defer cancel()
-
-		var err error
-		db, err = postgres.ConnectWithRetries(ctx, cfg.DB)
-		if err != nil {
-			logger.Error("Failed to connect to PostgreSQL: ", slog.String("error", err.Error()))
-			postRepo = inmemory.NewPostRepo()
-			commentRepo = inmemory.NewCommentRepo()
-			logger.Info("Using in-memory storage")
-		} else {
-			defer db.Close()
-
-			// Инициализация репозиториев с sqlx
-			pgRepo := postgres.NewPgRepository(db)
-			postRepo = pgRepo
-			commentRepo = pgRepo
-		}
-	} else {
-		// In-memory реализация
-		postRepo = inmemory.NewPostRepo()
-		commentRepo = inmemory.NewCommentRepo()
-		logger.Info("Using in-memory storage")
-	}
+	//Инициализация хранилища
+	postRepo, commentRepo := storage.CreateStorages(cfg.DB)
 
 	// Инициализация сервисов
 	notifier := service.NewNotifier()

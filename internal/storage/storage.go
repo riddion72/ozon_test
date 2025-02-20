@@ -34,7 +34,7 @@ func NewStorage(post *PostStorage, comment *CommentStorage) *Storage {
 	return &Storage{Post: post, Comment: comment}
 }
 
-func CreateStorages(cfg config.DB) (*PostStorage, *CommentStorage, error) {
+func CreateStorages(cfg config.DB) (PostStorage, CommentStorage) {
 	var postRepo PostStorage
 	var commentRepo CommentStorage
 	var db *sqlx.DB
@@ -65,5 +65,5 @@ func CreateStorages(cfg config.DB) (*PostStorage, *CommentStorage, error) {
 		logger.Info("Using in-memory storage")
 	}
 
-	return &postRepo, &commentRepo, nil
+	return postRepo, commentRepo
 }
