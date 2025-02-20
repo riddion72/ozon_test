@@ -1,7 +1,7 @@
 package config
 
 import (
-	"log"
+	"fmt"
 	"time"
 
 	"github.com/spf13/viper"
@@ -33,18 +33,18 @@ type Logger struct {
 	Level string `yaml:"level"`
 }
 
-func ParseConfig(path string) *Config {
+func ParseConfig(path string) (*Config, error) {
 	var cfg *Config
 
 	viper.SetConfigFile(path)
 
 	if err := viper.ReadInConfig(); err != nil {
-		log.Fatalf("error reading config file, %s", err)
+		return nil, fmt.Errorf("reading config error: %w", err)
 	}
 
 	if err := viper.Unmarshal(&cfg); err != nil {
-		log.Fatalf("unable to decode into struct, %v", err)
+		return nil, fmt.Errorf("ummarshal to config struct is failed: %w", err)
 	}
 
-	return cfg
+	return cfg, nil
 }
