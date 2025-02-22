@@ -2,6 +2,7 @@ package inmemory
 
 import (
 	"context"
+	"errors"
 	"sync"
 	"time"
 
@@ -10,12 +11,12 @@ import (
 
 type PostRepo struct {
 	sync.RWMutex
-	posts map[uint]domain.Post
+	posts map[int]domain.Post
 }
 
 func NewPostRepo() *PostRepo {
 	return &PostRepo{
-		posts: make(map[uint]domain.Post),
+		posts: make(map[int]domain.Post),
 	}
 }
 
@@ -29,7 +30,7 @@ func (r *PostRepo) Create(ctx context.Context, post domain.Post) error {
 	return nil
 }
 
-func (r *PostRepo) GetByID(ctx context.Context, id string) (domain.Post, bool) {
+func (r *PostRepo) GetByID(ctx context.Context, id int) (domain.Post, bool) {
 	r.RLock()
 	defer r.RUnlock()
 
@@ -46,6 +47,20 @@ func (r *PostRepo) List(ctx context.Context, limit, offset int) []domain.Post {
 		result = append(result, post)
 	}
 	return paginate(result, limit, offset)
+}
+
+func (r *PostRepo) CommentsAllowed(ctx context.Context, postID int, commentsAllowed bool) (*domain.Post, error) {
+	r.Lock()
+	defer r.Unlock()
+
+	post, exists := r.posts[postID]
+	if !exists {
+		return nil, errors.New("post not found")
+	}
+
+	post.CommentsAllowed = commentsAllowed
+	r.posts[postID] = post
+	return &post, nil
 }
 
 func paginate[T any](slice []T, limit, offset int) []T {

@@ -27,7 +27,31 @@ func (r *CommentRepo) Create(ctx context.Context, comment domain.Comment) error 
 	return err
 }
 
-func (r *CommentRepo) GetByPostID(ctx context.Context, postID string, limit, offset int) ([]domain.Comment, error) {
+func (r *CommentRepo) GetByID(ctx context.Context, id int) (domain.Comment, bool) {
+	row := r.db.QueryRowContext(
+		context.Background(),
+		`SELECT id, post_id, parent_id, user_id, text, created_at 
+		 FROM comments 
+		 WHERE id = $1`,
+		id,
+	)
+
+	var comment domain.Comment
+	err := row.Scan(
+		&comment.ID, &comment.PostID, &comment.ParentID,
+		&comment.User, &comment.Text, &comment.CreatedAt,
+	)
+
+	if err == sql.ErrNoRows {
+		return comment, false
+	} else if err != nil {
+		return comment, false
+	}
+
+	return comment, true
+}
+
+func (r *CommentRepo) GetByPostID(ctx context.Context, postID int, limit, offset int) ([]domain.Comment, error) {
 	rows, err := r.db.QueryContext(
 		context.Background(),
 		`SELECT id, post_id, parent_id, user_id, text, created_at 
@@ -56,26 +80,31 @@ func (r *CommentRepo) GetByPostID(ctx context.Context, postID string, limit, off
 	return comments, nil
 }
 
-func (r *CommentRepo) GetByID(ctx context.Context, id string) (domain.Comment, bool) {
-	row := r.db.QueryRowContext(
+func (r *CommentRepo) GetReplies(ctx context.Context, commentID int, limit int, offset int) ([]domain.Comment, error) {
+	rows, err := r.db.QueryContext(
 		context.Background(),
 		`SELECT id, post_id, parent_id, user_id, text, created_at 
          FROM comments 
-         WHERE id = $1`,
-		id,
+         WHERE parent_id = $1 
+         ORDER BY created_at DESC 
+         LIMIT $2 OFFSET $3`,
+		commentID, limit, offset,
 	)
 
-	var comment domain.Comment
-	err := row.Scan(
-		&comment.ID, &comment.PostID, &comment.ParentID,
-		&comment.User, &comment.Text, &comment.CreatedAt,
-	)
-
-	if err == sql.ErrNoRows {
-		return comment, false
-	} else if err != nil {
-		return comment, false
+	if err != nil {
+		return nil, err
 	}
+	defer rows.Close()
 
-	return comment, true
+	var comments []domain.Comment
+	for rows.Next() {
+		var comment domain.Comment
+		if err := rows.Scan(
+			&comment.ID, &comment.PostID, &comment.ParentID,
+			&comment.User, &comment.Text, &comment.CreatedAt,
+		); err == nil {
+			comments = append(comments, comment)
+		}
+	}
+	return comments, nil
 }

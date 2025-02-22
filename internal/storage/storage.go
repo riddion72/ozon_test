@@ -15,14 +15,16 @@ import (
 
 type PostStorage interface {
 	Create(ctx context.Context, post domain.Post) error
-	GetByID(ctx context.Context, id string) (domain.Post, bool)
+	GetByID(ctx context.Context, id int) (domain.Post, bool)
 	List(ctx context.Context, limit, offset int) []domain.Post
+	CommentsAllowed(ctx context.Context, postID int, commentsAllowed bool) (*domain.Post, error)
 }
 
 type CommentStorage interface {
 	Create(ctx context.Context, comment domain.Comment) error
-	GetByID(ctx context.Context, id string) (domain.Comment, bool)
-	GetByPostID(ctx context.Context, postID string, limit, offset int) ([]domain.Comment, error)
+	GetByID(ctx context.Context, id int) (domain.Comment, bool)
+	GetByPostID(ctx context.Context, postID int, limit, offset int) ([]domain.Comment, error)
+	GetReplies(ctx context.Context, commentID int, limit int, offset int) ([]domain.Comment, error)
 }
 
 type Storage struct {

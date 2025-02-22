@@ -35,19 +35,19 @@ func (r *PostRepository) Create(ctx context.Context, post domain.Post) error {
 	if err != nil {
 		logger.Error("Failed to create post",
 			slog.String("error", err.Error()),
-			slog.String("post_id", post.ID))
+			slog.Int("post_id", post.ID))
 		return err
 	}
 	return nil
 }
 
-func (r *PostRepository) GetByID(ctx context.Context, id string) (domain.Post, bool) {
+func (r *PostRepository) GetByID(ctx context.Context, id int) (domain.Post, bool) {
 	var post domain.Post
 	query := `SELECT * FROM posts WHERE id = $1`
 
 	err := r.db.Get(&post, query, id)
 	if err != nil {
-		logger.Debug("Post not found", slog.String("post_id", id))
+		logger.Debug("Post not found", slog.Int("post_id", id))
 		return domain.Post{}, false
 	}
 	return post, true
@@ -77,4 +77,18 @@ func (r *PostRepository) List(ctx context.Context, limit, offset int) []domain.P
 		}
 	}
 	return posts
+}
+
+func (r *PostRepository) CommentsAllowed(ctx context.Context, postID int, commentsAllowed bool) (*domain.Post, error) {
+	query := `UPDATE posts SET comments_allowed = $1 WHERE id = $2 RETURNING *`
+
+	var post domain.Post
+	err := r.db.Get(&post, query, commentsAllowed, postID)
+	if err != nil {
+		logger.Error("Failed to update comments allowed status",
+			slog.String("error", err.Error()),
+			slog.Int("post_id", postID))
+		return nil, err
+	}
+	return &post, nil
 }

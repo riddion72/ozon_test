@@ -8,18 +8,15 @@ import (
 	"github.com/riddion72/ozon_test/internal/storage"
 )
 
-var (
-	ErrCommentTooLong   = errors.New("comment exceeds 2000 characters")
-	ErrCommentsDisabled = errors.New("comments are disabled for this post")
-	ErrParentNotFound   = errors.New("parent comment not found")
-	ErrPostNotFound     = errors.New("post not found")
-	ErrInvalidPostData  = errors.New("invalid post data")
+const (
+	defaultLimit  = 10
+	maxLimit      = 100
+	defaultOffset = 0
 )
 
 type commentService struct {
 	commentRepo storage.CommentStorage
 	postRepo    storage.PostStorage
-	notifier    *Notifier
 }
 
 func NewCommentService(
@@ -35,24 +32,24 @@ func NewCommentService(
 func (s *commentService) Create(ctx context.Context, comment domain.Comment) error {
 	// Проверка длины комментария
 	if len(comment.Text) > 2000 {
-		return ErrCommentTooLong
+		return errors.New("comment exceeds 2000 characters")
 	}
 
 	// Проверка существования поста
 	post, exists := s.postRepo.GetByID(ctx, comment.PostID)
 	if !exists {
-		return ErrPostNotFound
+		return errors.New("post not found")
 	}
 
 	// Проверка разрешения комментариев
 	if !post.CommentsAllowed {
-		return ErrCommentsDisabled
+		return errors.New("comments are disabled for this post")
 	}
 
 	// Проверка родительского комментария
 	if comment.ParentID != nil {
 		if _, exists := s.commentRepo.GetByID(ctx, *comment.ParentID); !exists {
-			return ErrParentNotFound
+			return errors.New("parent comment not found")
 		}
 	}
 
@@ -63,6 +60,38 @@ func (s *commentService) Create(ctx context.Context, comment domain.Comment) err
 	return nil
 }
 
-func (s *commentService) GetCommentsByPostID(ctx context.Context, postID string, limit, offset int) ([]domain.Comment, error) {
-	return s.commentRepo.GetByPostID(ctx, postID, limit, offset)
+func (s *commentService) GetCommentsByPostID(ctx context.Context, postID int, limit, offset *int) ([]domain.Comment, error) {
+	var dLimit *int
+	var dOffset *int
+	if limit == nil {
+		*dLimit = defaultLimit
+		limit = dLimit
+	} else {
+		if *limit <= 0 || *limit > maxLimit {
+			*limit = defaultLimit
+		}
+	}
+	if offset == nil {
+		*dOffset = defaultOffset
+		offset = dOffset
+	}
+	return s.commentRepo.GetByPostID(ctx, postID, *limit, *offset)
+}
+
+func (s *commentService) GetReplies(ctx context.Context, commentID int, limit *int, offset *int) ([]domain.Comment, error) {
+	var dLimit *int
+	var dOffset *int
+	if limit == nil {
+		*dLimit = defaultLimit
+		limit = dLimit
+	} else {
+		if *limit <= 0 || *limit > maxLimit {
+			*limit = defaultLimit
+		}
+	}
+	if offset == nil {
+		*dOffset = defaultOffset
+		offset = dOffset
+	}
+	return s.commentRepo.GetReplies(ctx, commentID, *limit, *offset)
 }

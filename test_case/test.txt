@@ -32,14 +32,13 @@ mutation {
     user: "username"
     title: "My First Post"
     content: "This is the content of my first post."
-    commentsEnabled: true
+    commentsAllowed: true
   }) {
     id
     title
     user
     content
     commentsAllowed
-    createdAt
   }
 }
 Мутация для создания нового комментария

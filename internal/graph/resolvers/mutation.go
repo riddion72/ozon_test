@@ -8,6 +8,8 @@ import (
 	"github.com/riddion72/ozon_test/internal/graph/model"
 )
 
+type mutationResolver struct{ *Resolver }
+
 func (r *mutationResolver) CreatePost(ctx context.Context, input model.NewPost) (*domain.Post, error) {
 	post := domain.Post{
 		Title:   input.Title,
@@ -15,14 +17,14 @@ func (r *mutationResolver) CreatePost(ctx context.Context, input model.NewPost) 
 		Content: input.Content,
 	}
 
-	if err := r.Posts.Create(ctx, post); err != nil {
+	if err := r.PostsSrvc.Create(ctx, post); err != nil {
 		return nil, err
 	}
 	return &post, nil
 }
 
 func (r *mutationResolver) CloseCommentsPost(ctx context.Context, user string, postID int, commentsAllowed bool) (*domain.Post, error) {
-	post, err := r.Posts.CloseComments(ctx, user, postID, commentsAllowed)
+	post, err := r.PostsSrvc.CloseComments(ctx, user, postID, commentsAllowed)
 	if err != nil {
 		return nil, err
 	}
@@ -31,7 +33,7 @@ func (r *mutationResolver) CloseCommentsPost(ctx context.Context, user string, p
 }
 
 func (r *mutationResolver) CreateComment(ctx context.Context, input model.NewComment) (*domain.Comment, error) {
-	post, exists := r.Posts.GetByID(ctx, input.PostID)
+	post, exists := r.PostsSrvc.GetPostByID(ctx, input.PostID)
 	if !exists {
 		return nil, errors.New("post not found")
 	}
@@ -51,7 +53,7 @@ func (r *mutationResolver) CreateComment(ctx context.Context, input model.NewCom
 		Text:     input.Text,
 	}
 
-	if err := r.Comments.Create(ctx, comment); err != nil {
+	if err := r.CommentsSrvs.Create(ctx, comment); err != nil {
 		return nil, err
 	}
 

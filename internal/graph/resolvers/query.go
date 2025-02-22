@@ -7,12 +7,14 @@ import (
 	"github.com/riddion72/ozon_test/internal/domain"
 )
 
+type queryResolver struct{ *Resolver }
+
 func (r *queryResolver) Posts(ctx context.Context, limit int, offset int) ([]domain.Post, error) {
-	return r.Posts.GetPosts(ctx, limit, offset)
+	return r.PostsSrvc.GetPosts(ctx, limit, offset)
 }
 
 func (r *queryResolver) Post(ctx context.Context, id int) (*domain.Post, error) {
-	post, exists := r.Posts.GetPostByID(ctx, id)
+	post, exists := r.PostsSrvc.GetPostByID(ctx, id)
 	if !exists {
 		return nil, fmt.Errorf("post not found")
 	}
@@ -20,9 +22,9 @@ func (r *queryResolver) Post(ctx context.Context, id int) (*domain.Post, error) 
 }
 
 func (r *queryResolver) Comments(ctx context.Context, postID int, limit *int, offset *int) ([]domain.Comment, error) {
-	return r.Comments.GetCommentsByPostID(ctx, postID, limit, offset)
+	return r.CommentsSrvs.GetCommentsByPostID(ctx, postID, limit, offset)
 }
 
 func (r *queryResolver) Replies(ctx context.Context, commentID int, limit *int, offset *int) ([]domain.Comment, error) {
-	return r.Comments.GetReplies(commentID, limit, offset)
+	return r.CommentsSrvs.GetReplies(ctx, commentID, limit, offset)
 }
