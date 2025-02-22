@@ -13,14 +13,19 @@ import (
 // 	panic(fmt.Errorf("not implemented: User - user"))
 // }
 
-// // PostID is the resolver for the postId field.
-// func (r *commentResolver) PostID(ctx context.Context, obj *domain.Comment) (string, error) {
-// 	panic(fmt.Errorf("not implemented: PostID - postId"))
+// // PostID is the resolver for the postID field.
+// func (r *commentResolver) PostID(ctx context.Context, obj *domain.Comment) (int, error) {
+// 	panic(fmt.Errorf("not implemented: PostID - postID"))
 // }
 
-// // ParentID is the resolver for the parentId field.
-// func (r *commentResolver) ParentID(ctx context.Context, obj *domain.Comment) (*string, error) {
-// 	panic(fmt.Errorf("not implemented: ParentID - parentId"))
+// // ParentID is the resolver for the parentID field.
+// func (r *commentResolver) ParentID(ctx context.Context, obj *domain.Comment) (*int, error) {
+// 	panic(fmt.Errorf("not implemented: ParentID - parentID"))
+// }
+
+// // Replies is the resolver for the replies field.
+// func (r *commentResolver) Replies(ctx context.Context, obj *domain.Comment, limit *int, offset *int) ([]domain.Comment, error) {
+// 	panic(fmt.Errorf("not implemented: Replies - replies"))
 // }
 
 // // CreatePost is the resolver for the createPost field.
@@ -28,14 +33,24 @@ import (
 // 	panic(fmt.Errorf("not implemented: CreatePost - createPost"))
 // }
 
+// // CloseCommentsPost is the resolver for the closeCommentsPost field.
+// func (r *mutationResolver) CloseCommentsPost(ctx context.Context, user string, postID int, commentsAllowed bool) (*domain.Post, error) {
+// 	panic(fmt.Errorf("not implemented: CloseCommentsPost - closeCommentsPost"))
+// }
+
 // // CreateComment is the resolver for the createComment field.
 // func (r *mutationResolver) CreateComment(ctx context.Context, input model.NewComment) (*domain.Comment, error) {
 // 	panic(fmt.Errorf("not implemented: CreateComment - createComment"))
 // }
 
-// User is the resolver for the user field.
+// // User is the resolver for the user field.
 // func (r *postResolver) User(ctx context.Context, obj *domain.Post) (string, error) {
 // 	panic(fmt.Errorf("not implemented: User - user"))
+// }
+
+// // Comments is the resolver for the comments field.
+// func (r *postResolver) Comments(ctx context.Context, obj *domain.Post, limit *int, offset *int) ([]domain.Comment, error) {
+// 	panic(fmt.Errorf("not implemented: Comments - comments"))
 // }
 
 // // Posts is the resolver for the posts field.
@@ -44,17 +59,22 @@ import (
 // }
 
 // // Post is the resolver for the post field.
-// func (r *queryResolver) Post(ctx context.Context, id string) (*domain.Post, error) {
+// func (r *queryResolver) Post(ctx context.Context, id int) (*domain.Post, error) {
 // 	panic(fmt.Errorf("not implemented: Post - post"))
 // }
 
 // // Comments is the resolver for the comments field.
-// func (r *queryResolver) Comments(ctx context.Context, postID string, limit int, offset int) ([]domain.Comment, error) {
+// func (r *queryResolver) Comments(ctx context.Context, postID int, limit *int, offset *int) ([]domain.Comment, error) {
 // 	panic(fmt.Errorf("not implemented: Comments - comments"))
 // }
 
+// // Replies is the resolver for the replies field.
+// func (r *queryResolver) Replies(ctx context.Context, commentID int, limit *int, offset *int) ([]domain.Comment, error) {
+// 	panic(fmt.Errorf("not implemented: Replies - replies"))
+// }
+
 // // CommentAdded is the resolver for the commentAdded field.
-// func (r *subscriptionResolver) CommentAdded(ctx context.Context, postID string) (<-chan *domain.Comment, error) {
+// func (r *subscriptionResolver) CommentAdded(ctx context.Context, postID int) (<-chan *domain.Comment, error) {
 // 	panic(fmt.Errorf("not implemented: CommentAdded - commentAdded"))
 // }
 

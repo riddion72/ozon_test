@@ -6,17 +6,17 @@ type Mutation struct {
 }
 
 type NewComment struct {
-	PostID   string  `json:"postId"`
-	ParentID *string `json:"parentId,omitempty"`
-	User     string  `json:"user"`
-	Text     string  `json:"text"`
+	PostID   int    `json:"postID"`
+	ParentID *int   `json:"parentID,omitempty"`
+	User     string `json:"user"`
+	Text     string `json:"text"`
 }
 
 type NewPost struct {
 	User            string `json:"user"`
 	Title           string `json:"title"`
 	Content         string `json:"content"`
-	CommentsEnabled *bool  `json:"commentsEnabled,omitempty"`
+	CommentsAllowed *bool  `json:"commentsAllowed,omitempty"`
 }
 
 type Query struct {

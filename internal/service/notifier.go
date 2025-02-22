@@ -6,19 +6,19 @@ import (
 	"github.com/riddion72/ozon_test/internal/domain"
 )
 
-type Notifier struct {
+type notifier struct {
 	mu          sync.RWMutex
-	subscribers map[string][]chan domain.Comment
+	subscribers map[int][]chan *domain.Comment
 }
 
-func NewNotifier() *Notifier {
-	return &Notifier{
-		subscribers: make(map[string][]chan domain.Comment),
+func NewNotifier() *notifier {
+	return &notifier{
+		subscribers: make(map[int][]chan *domain.Comment),
 	}
 }
 
-func (n *Notifier) Subscribe(postID string) chan domain.Comment {
-	ch := make(chan domain.Comment, 1)
+func (n *notifier) Subscribe(postID int) chan *domain.Comment {
+	ch := make(chan *domain.Comment, 1)
 
 	n.mu.Lock()
 	defer n.mu.Unlock()
@@ -27,7 +27,7 @@ func (n *Notifier) Subscribe(postID string) chan domain.Comment {
 	return ch
 }
 
-func (n *Notifier) Unsubscribe(postID string, ch chan domain.Comment) {
+func (n *notifier) Unsubscribe(postID int, ch chan *domain.Comment) {
 	n.mu.Lock()
 	defer n.mu.Unlock()
 
@@ -41,7 +41,7 @@ func (n *Notifier) Unsubscribe(postID string, ch chan domain.Comment) {
 	}
 }
 
-func (n *Notifier) Notify(postID string, comment domain.Comment) {
+func (n *notifier) Notify(postID int, comment *domain.Comment) {
 	n.mu.RLock()
 	defer n.mu.RUnlock()
 

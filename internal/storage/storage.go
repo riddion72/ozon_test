@@ -14,15 +14,15 @@ import (
 )
 
 type PostStorage interface {
-	Create(post domain.Post) error
-	GetByID(id string) (domain.Post, bool)
-	List(limit, offset int) []domain.Post
+	Create(ctx context.Context, post domain.Post) error
+	GetByID(ctx context.Context, id string) (domain.Post, bool)
+	List(ctx context.Context, limit, offset int) []domain.Post
 }
 
 type CommentStorage interface {
-	Create(comment domain.Comment) error
-	GetByID(id string) (domain.Comment, bool)
-	GetByPostID(postID string, limit, offset int) []domain.Comment
+	Create(ctx context.Context, comment domain.Comment) error
+	GetByID(ctx context.Context, id string) (domain.Comment, bool)
+	GetByPostID(ctx context.Context, postID string, limit, offset int) ([]domain.Comment, error)
 }
 
 type Storage struct {

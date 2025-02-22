@@ -1,48 +1,52 @@
 scalar Time
 
 type Post {
-  id: ID!
+  id: Int!
   title: String!
   user: String!
   content: String!
   commentsAllowed: Boolean!
   createdAt: Time!
+  comments(limit: Int, offset: Int): [Comment!]
 }
 
 type Comment {
-  id: ID!
+  id: Int!
   user: String!
-  postId: ID!
-  parentId: ID
+  postID: Int!
+  parentID: Int
   text: String!
   createdAt: Time!
+  replies(limit: Int, offset: Int): [Comment!]
 }
 
 type Query {
   posts(limit: Int!, offset: Int!): [Post!]!
-  post(id: ID!): Post
-  comments(postId: ID!, limit: Int!, offset: Int!): [Comment!]!
+  post(id: Int!): Post
+  comments(postID: Int!, limit: Int, offset: Int): [Comment!]!
+  replies(commentID: Int!, limit: Int, offset: Int): [Comment!]!
 }
 
 input NewPost {
   user: String!
   title: String!
   content: String!
-  commentsEnabled: Boolean
+  commentsAllowed: Boolean
 }
 
 input NewComment {
-  postId: ID!
-  parentId: ID
+  postID: Int!
+  parentID: Int
   user: String!
   text: String!
 }
 
 type Mutation {
   createPost(input: NewPost!): Post!
+  closeCommentsPost(user: String!, postID: Int!, commentsAllowed: Boolean!): Post!
   createComment(input: NewComment!): Comment!
 }
 
 type Subscription {
-  commentAdded(postId: ID!): Comment!
+  commentAdded(postID: Int!): Comment!
 }

@@ -17,7 +17,7 @@ func NewPostRepository(db *sqlx.DB) *PostRepository {
 	return &PostRepository{db: db}
 }
 
-func (r *PostRepository) Create(post domain.Post) error {
+func (r *PostRepository) Create(ctx context.Context, post domain.Post) error {
 	query := `
 		INSERT INTO posts (id, title, user_id, content, comments_allowed, created_at)
 		VALUES (:id, :title, :user_id, :content, :comments_allowed, :created_at)`
@@ -41,7 +41,7 @@ func (r *PostRepository) Create(post domain.Post) error {
 	return nil
 }
 
-func (r *PostRepository) GetByID(id string) (domain.Post, bool) {
+func (r *PostRepository) GetByID(ctx context.Context, id string) (domain.Post, bool) {
 	var post domain.Post
 	query := `SELECT * FROM posts WHERE id = $1`
 
@@ -53,7 +53,7 @@ func (r *PostRepository) GetByID(id string) (domain.Post, bool) {
 	return post, true
 }
 
-func (r *PostRepository) List(limit, offset int) []domain.Post {
+func (r *PostRepository) List(ctx context.Context, limit, offset int) []domain.Post {
 	rows, err := r.db.QueryContext(
 		context.Background(),
 		`SELECT id, title, user_id, content, comments_allowed, created_at 

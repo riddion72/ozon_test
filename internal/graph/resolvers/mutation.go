@@ -15,14 +15,23 @@ func (r *mutationResolver) CreatePost(ctx context.Context, input model.NewPost) 
 		Content: input.Content,
 	}
 
-	if err := r.services.Posts.Create(post); err != nil {
+	if err := r.Posts.Create(ctx, post); err != nil {
 		return nil, err
 	}
 	return &post, nil
 }
 
+func (r *mutationResolver) CloseCommentsPost(ctx context.Context, user string, postID int, commentsAllowed bool) (*domain.Post, error) {
+	post, err := r.Posts.CloseComments(ctx, user, postID, commentsAllowed)
+	if err != nil {
+		return nil, err
+	}
+
+	return post, nil
+}
+
 func (r *mutationResolver) CreateComment(ctx context.Context, input model.NewComment) (*domain.Comment, error) {
-	post, exists := r.services.Posts.GetByID(input.PostID)
+	post, exists := r.Posts.GetByID(ctx, input.PostID)
 	if !exists {
 		return nil, errors.New("post not found")
 	}
@@ -42,10 +51,10 @@ func (r *mutationResolver) CreateComment(ctx context.Context, input model.NewCom
 		Text:     input.Text,
 	}
 
-	if err := r.services.Comments.Create(comment); err != nil {
+	if err := r.Comments.Create(ctx, comment); err != nil {
 		return nil, err
 	}
 
-	r.services.Notifier.Notify(comment.PostID, comment)
+	r.Notifier.Notify(comment.PostID, &comment)
 	return &comment, nil
 }

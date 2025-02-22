@@ -6,17 +6,15 @@ import (
 	"github.com/riddion72/ozon_test/internal/domain"
 )
 
-func (r *subscriptionResolver) CommentAdded(ctx context.Context, postID string) (<-chan *domain.Comment, error) {
-	ch := make(chan *domain.Comment, 1)
+func (r *subscriptionResolver) CommentAdded(ctx context.Context, postID int) (<-chan *domain.Comment, error) {
+	// Подписываемся на новые комментарии
+	channel := r.Notifier.Subscribe(postID)
 
-	unsubscribe := r.services.Notifier.Subscribe(postID, func(comment domain.Comment) {
-		ch <- &comment
-	})
-
+	// Возвращаем канал подписчику
 	go func() {
-		<-ctx.Done()
-		unsubscribe()
+		<-ctx.Done() // Закрываем канал, когда контекст завершен
+		r.Notifier.Unsubscribe(postID, channel)
 	}()
 
-	return ch, nil
+	return channel, nil
 }

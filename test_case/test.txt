@@ -1,0 +1,75 @@
+Запрос на получение списка постов
+query {
+  posts(limit: 10, offset: 0) {
+    id
+    title
+    user
+    content
+    commentsAllowed
+    createdAt
+  }
+}
+Запрос на получение конкретного поста и его комментариев
+query {
+  post(id: "1") {
+    id
+    title
+    user
+    content
+    commentsAllowed
+    createdAt
+    comments(postId: "1", limit: 10, offset: 0) {
+      id
+      user
+      text
+      createdAt
+    }
+  }
+}
+Мутация для создания нового поста
+mutation {
+  createPost(input: {
+    user: "username"
+    title: "My First Post"
+    content: "This is the content of my first post."
+    commentsEnabled: true
+  }) {
+    id
+    title
+    user
+    content
+    commentsAllowed
+    createdAt
+  }
+}
+Мутация для создания нового комментария
+mutation {
+  createComment(input: {
+    postId: "1"
+    parentId: null
+    user: "username"
+    text: "This is a comment."
+  }) {
+    id
+    user
+    text
+    createdAt
+  }
+}
+ Подписка на новые комментарии к посту
+subscription {
+  commentAdded(postId: "1") {
+    id
+    user
+    text
+    createdAt
+  }
+}
+
+{
+  "query": "query { posts(limit: 10, offset: 0) { id title user content commentsAllowed createdAt } }"
+}
+
+{
+  "query": "mutation { createPost(input: { user: \"username\", title: \"My First Post\", content: \"This is the content of my first post.\", commentsEnabled: true }) { id title user content commentsAllowed createdAt } }"
+}

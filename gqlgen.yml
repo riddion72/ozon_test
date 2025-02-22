@@ -21,9 +21,6 @@ autobind:
   - github.com/riddion72/ozon_test/internal/domain
 
 models:
-  ID:
-    model:
-      - github.com/99designs/gqlgen/graphql.ID
   Int:
     model:
       - github.com/99designs/gqlgen/graphql.Int
@@ -35,14 +32,18 @@ models:
     fields:
       user:
         resolver: true
+      comments:
+        resolver: true
   Comment:
     model: github.com/riddion72/ozon_test/internal/domain.Comment
     fields:
       user:
         resolver: true
-      postId:
+      postID:
         resolver: true
-      parentId:
+      parentID:
+        resolver: true
+      replies:
         resolver: true
 
 struct_tag: json

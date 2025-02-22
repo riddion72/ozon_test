@@ -16,7 +16,7 @@ func NewCommentRepository(db *sqlx.DB) *CommentRepo {
 	return &CommentRepo{db: db}
 }
 
-func (r *CommentRepo) Create(comment domain.Comment) error {
+func (r *CommentRepo) Create(ctx context.Context, comment domain.Comment) error {
 	_, err := r.db.ExecContext(
 		context.Background(),
 		`INSERT INTO comments(id, post_id, parent_id, user_id, text, created_at)
@@ -27,7 +27,7 @@ func (r *CommentRepo) Create(comment domain.Comment) error {
 	return err
 }
 
-func (r *CommentRepo) GetByPostID(postID string, limit, offset int) []domain.Comment {
+func (r *CommentRepo) GetByPostID(ctx context.Context, postID string, limit, offset int) ([]domain.Comment, error) {
 	rows, err := r.db.QueryContext(
 		context.Background(),
 		`SELECT id, post_id, parent_id, user_id, text, created_at 
@@ -39,7 +39,7 @@ func (r *CommentRepo) GetByPostID(postID string, limit, offset int) []domain.Com
 	)
 
 	if err != nil {
-		return nil
+		return nil, err
 	}
 	defer rows.Close()
 
@@ -53,10 +53,10 @@ func (r *CommentRepo) GetByPostID(postID string, limit, offset int) []domain.Com
 			comments = append(comments, comment)
 		}
 	}
-	return comments
+	return comments, nil
 }
 
-func (r *CommentRepo) GetByID(id string) (domain.Comment, bool) {
+func (r *CommentRepo) GetByID(ctx context.Context, id string) (domain.Comment, bool) {
 	row := r.db.QueryRowContext(
 		context.Background(),
 		`SELECT id, post_id, parent_id, user_id, text, created_at 

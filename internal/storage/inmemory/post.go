@@ -1,6 +1,7 @@
 package inmemory
 
 import (
+	"context"
 	"sync"
 	"time"
 
@@ -9,25 +10,26 @@ import (
 
 type PostRepo struct {
 	sync.RWMutex
-	posts map[string]domain.Post
+	posts map[uint]domain.Post
 }
 
 func NewPostRepo() *PostRepo {
 	return &PostRepo{
-		posts: make(map[string]domain.Post),
+		posts: make(map[uint]domain.Post),
 	}
 }
 
-func (r *PostRepo) Create(post domain.Post) error {
+func (r *PostRepo) Create(ctx context.Context, post domain.Post) error {
 	r.Lock()
 	defer r.Unlock()
 
 	post.CreatedAt = time.Now()
+	post.ID = len(r.posts)
 	r.posts[post.ID] = post
 	return nil
 }
 
-func (r *PostRepo) GetByID(id string) (domain.Post, bool) {
+func (r *PostRepo) GetByID(ctx context.Context, id string) (domain.Post, bool) {
 	r.RLock()
 	defer r.RUnlock()
 
@@ -35,7 +37,7 @@ func (r *PostRepo) GetByID(id string) (domain.Post, bool) {
 	return post, exists
 }
 
-func (r *PostRepo) List(limit, offset int) []domain.Post {
+func (r *PostRepo) List(ctx context.Context, limit, offset int) []domain.Post {
 	r.RLock()
 	defer r.RUnlock()
 

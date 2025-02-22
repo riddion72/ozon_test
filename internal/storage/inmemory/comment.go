@@ -1,6 +1,7 @@
 package inmemory
 
 import (
+	"context"
 	"sync"
 	"time"
 
@@ -20,7 +21,7 @@ func NewCommentRepo() *CommentRepo {
 	}
 }
 
-func (r *CommentRepo) Create(comment domain.Comment) error {
+func (r *CommentRepo) Create(ctx context.Context, comment domain.Comment) error {
 	r.Lock()
 	defer r.Unlock()
 
@@ -30,7 +31,7 @@ func (r *CommentRepo) Create(comment domain.Comment) error {
 	return nil
 }
 
-func (r *CommentRepo) GetByPostID(postID string, limit, offset int) []domain.Comment {
+func (r *CommentRepo) GetByPostID(ctx context.Context, postID string, limit, offset int) ([]domain.Comment, error) {
 	r.RLock()
 	defer r.RUnlock()
 
@@ -39,10 +40,11 @@ func (r *CommentRepo) GetByPostID(postID string, limit, offset int) []domain.Com
 	for _, id := range commentIDs {
 		comments = append(comments, r.comments[id])
 	}
-	return paginate(comments, limit, offset)
+	ans := paginate(comments, limit, offset)
+	return ans, nil
 }
 
-func (r *CommentRepo) GetByID(id string) (domain.Comment, bool) {
+func (r *CommentRepo) GetByID(ctx context.Context, id string) (domain.Comment, bool) {
 	r.RLock()
 	defer r.RUnlock()
 

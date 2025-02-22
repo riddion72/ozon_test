@@ -15,8 +15,8 @@ import (
 	"github.com/99designs/gqlgen/graphql/playground"
 
 	"github.com/riddion72/ozon_test/internal/config"
-	// "github.com/riddion72/ozon_test/internal/graph"
 	"github.com/riddion72/ozon_test/internal/graph/generated"
+	"github.com/riddion72/ozon_test/internal/graph/resolvers"
 	"github.com/riddion72/ozon_test/internal/logger"
 	"github.com/riddion72/ozon_test/internal/service"
 	"github.com/riddion72/ozon_test/internal/storage"
@@ -42,20 +42,14 @@ func main() {
 	notifier := service.NewNotifier()
 	postService := service.NewPostService(postRepo)
 	commentService := service.NewCommentService(commentRepo, postRepo, notifier)
-
+	service := service.NewServices(postService, commentService, notifier)
 	// Создаем резолвер
-	resolver := &graph.Resolver{
-		Services: &service.Services{
-			Posts:    postService,
-			Comments: commentService,
-			Notifier: notifier,
-		},
-	}
+	resolver := resolvers.NewResolver(service)
 
 	// Настройка HTTP сервера
 	srv := handler.NewDefaultServer(generated.NewExecutableSchema(generated.Config{
-		Resolvers:  resolver,
-		Complexity: graph.ComplexityConfig(),
+		Resolvers: resolver,
+		// Complexity: resolvers.ComplexityConfig(),
 	}))
 	srv.Use(extension.FixedComplexityLimit(1000))
 

@@ -1,57 +1,68 @@
 package service
 
 import (
+	"context"
 	"errors"
 
 	"github.com/riddion72/ozon_test/internal/domain"
 	"github.com/riddion72/ozon_test/internal/storage"
 )
 
-type CommentService struct {
-	repo     storage.CommentStorage
-	postRepo storage.PostStorage
-	notifier *Notifier
+var (
+	ErrCommentTooLong   = errors.New("comment exceeds 2000 characters")
+	ErrCommentsDisabled = errors.New("comments are disabled for this post")
+	ErrParentNotFound   = errors.New("parent comment not found")
+	ErrPostNotFound     = errors.New("post not found")
+	ErrInvalidPostData  = errors.New("invalid post data")
+)
+
+type commentService struct {
+	commentRepo storage.CommentStorage
+	postRepo    storage.PostStorage
+	notifier    *Notifier
 }
 
 func NewCommentService(
-	repo storage.CommentStorage,
+	commentRepo storage.CommentStorage,
 	postRepo storage.PostStorage,
-	notifier *Notifier,
-) *CommentService {
-	return &CommentService{
-		repo:     repo,
-		postRepo: postRepo,
-		notifier: notifier,
+) *commentService {
+	return &commentService{
+		commentRepo: commentRepo,
+		postRepo:    postRepo,
 	}
 }
 
-func (s *CommentService) Create(comment domain.Comment) error {
+func (s *commentService) Create(ctx context.Context, comment domain.Comment) error {
+	// Проверка длины комментария
+	if len(comment.Text) > 2000 {
+		return ErrCommentTooLong
+	}
+
 	// Проверка существования поста
-	post, exists := s.postRepo.GetByID(comment.PostID)
+	post, exists := s.postRepo.GetByID(ctx, comment.PostID)
 	if !exists {
-		return errors.New("post not found")
+		return ErrPostNotFound
 	}
 
 	// Проверка разрешения комментариев
 	if !post.CommentsAllowed {
-		return errors.New("comments are disabled for this post")
+		return ErrCommentsDisabled
 	}
 
-	// Проверка длины комментария
-	if len(comment.Text) > 2000 {
-		return errors.New("comment text exceeds 2000 characters")
-	}
-
-	// Проверка существования родительского комментария
+	// Проверка родительского комментария
 	if comment.ParentID != nil {
-		if _, exists := s.repo.GetByID(*comment.ParentID); !exists {
-			return errors.New("parent comment not found")
+		if _, exists := s.commentRepo.GetByID(ctx, *comment.ParentID); !exists {
+			return ErrParentNotFound
 		}
 	}
 
-	return s.repo.Create(comment)
+	// Создание комментария
+	if err := s.commentRepo.Create(ctx, comment); err != nil {
+		return err
+	}
+	return nil
 }
 
-func (s *CommentService) GetByPostID(postID string, limit, offset int) ([]domain.Comment, error) {
-	return s.repo.GetByPostID(postID, limit, offset), nil
+func (s *commentService) GetCommentsByPostID(ctx context.Context, postID string, limit, offset int) ([]domain.Comment, error) {
+	return s.commentRepo.GetByPostID(ctx, postID, limit, offset)
 }
