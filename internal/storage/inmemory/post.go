@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/riddion72/ozon_test/internal/domain"
+	"github.com/riddion72/ozon_test/internal/storage/inmemory/tools"
 )
 
 type PostRepo struct {
@@ -20,14 +21,14 @@ func NewPostRepo() *PostRepo {
 	}
 }
 
-func (r *PostRepo) Create(ctx context.Context, post domain.Post) error {
+func (r *PostRepo) Create(ctx context.Context, post *domain.Post) (*domain.Post, error) {
 	r.Lock()
 	defer r.Unlock()
 
 	post.CreatedAt = time.Now()
-	post.ID = len(r.posts)
-	r.posts[post.ID] = post
-	return nil
+	post.ID = len(r.posts) + 1
+	r.posts[post.ID] = *post
+	return post, nil
 }
 
 func (r *PostRepo) GetByID(ctx context.Context, id int) (domain.Post, bool) {
@@ -38,15 +39,20 @@ func (r *PostRepo) GetByID(ctx context.Context, id int) (domain.Post, bool) {
 	return post, exists
 }
 
-func (r *PostRepo) List(ctx context.Context, limit, offset int) []domain.Post {
+func (r *PostRepo) List(ctx context.Context, limit, offset int) ([]domain.Post, error) {
 	r.RLock()
 	defer r.RUnlock()
 
-	result := make([]domain.Post, 0, limit)
-	for _, post := range r.posts {
-		result = append(result, post)
+	end := limit + offset
+	result := make([]domain.Post, 0, end)
+	for i := 0; i < len(r.posts) && end > 0; i++ {
+		post, exists := r.posts[i]
+		if exists {
+			end--
+			result = append(result, post)
+		}
 	}
-	return paginate(result, limit, offset)
+	return tools.Paginate(result, limit, offset), nil
 }
 
 func (r *PostRepo) CommentsAllowed(ctx context.Context, postID int, commentsAllowed bool) (*domain.Post, error) {
@@ -61,15 +67,4 @@ func (r *PostRepo) CommentsAllowed(ctx context.Context, postID int, commentsAllo
 	post.CommentsAllowed = commentsAllowed
 	r.posts[postID] = post
 	return &post, nil
-}
-
-func paginate[T any](slice []T, limit, offset int) []T {
-	if offset > len(slice) {
-		return []T{}
-	}
-	end := offset + limit
-	if end > len(slice) {
-		end = len(slice)
-	}
-	return slice[offset:end]
 }

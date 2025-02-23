@@ -29,35 +29,45 @@ func NewCommentService(
 	}
 }
 
-func (s *commentService) Create(ctx context.Context, comment domain.Comment) error {
+func (s *commentService) Create(ctx context.Context, comment *domain.Comment) (*domain.Comment, error) {
 	// Проверка длины комментария
 	if len(comment.Text) > 2000 {
-		return errors.New("comment exceeds 2000 characters")
+		return nil, errors.New("comment exceeds 2000 characters")
 	}
 
 	// Проверка существования поста
 	post, exists := s.postRepo.GetByID(ctx, comment.PostID)
 	if !exists {
-		return errors.New("post not found")
+		return nil, errors.New("post not found")
 	}
 
 	// Проверка разрешения комментариев
 	if !post.CommentsAllowed {
-		return errors.New("comments are disabled for this post")
+		return nil, errors.New("comments are disabled for this post")
 	}
 
 	// Проверка родительского комментария
 	if comment.ParentID != nil {
-		if _, exists := s.commentRepo.GetByID(ctx, *comment.ParentID); !exists {
-			return errors.New("parent comment not found")
+		exists, err := s.commentRepo.CheckCommentUnderPost(ctx, comment.PostID, *comment.ParentID)
+		if err != nil {
+			return nil, err
+		}
+		if !exists {
+			return nil, errors.New("parent comment not found")
 		}
 	}
 
-	// Создание комментария
-	if err := s.commentRepo.Create(ctx, comment); err != nil {
-		return err
+	// Проверка валидности входных данных комментария
+	if comment.Text == "" {
+		return nil, errors.New("invalid comment data")
 	}
-	return nil
+
+	// Создание комментария
+	createdComment, err := s.commentRepo.Create(ctx, comment)
+	if err != nil {
+		return nil, err
+	}
+	return createdComment, nil
 }
 
 func (s *commentService) GetCommentsByPostID(ctx context.Context, postID int, limit, offset *int) ([]domain.Comment, error) {
@@ -66,15 +76,20 @@ func (s *commentService) GetCommentsByPostID(ctx context.Context, postID int, li
 	if limit == nil {
 		*dLimit = defaultLimit
 		limit = dLimit
-	} else {
-		if *limit <= 0 || *limit > maxLimit {
-			*limit = defaultLimit
-		}
+	} else if *limit <= 0 || *limit > maxLimit {
+		return []domain.Comment{}, errors.New("invalid value of limit")
 	}
 	if offset == nil {
 		*dOffset = defaultOffset
 		offset = dOffset
 	}
+
+	// Проверка существования поста
+	_, exists := s.postRepo.GetByID(ctx, postID)
+	if !exists {
+		return nil, errors.New("post not found")
+	}
+
 	return s.commentRepo.GetByPostID(ctx, postID, *limit, *offset)
 }
 
@@ -84,14 +99,17 @@ func (s *commentService) GetReplies(ctx context.Context, commentID int, limit *i
 	if limit == nil {
 		*dLimit = defaultLimit
 		limit = dLimit
-	} else {
-		if *limit <= 0 || *limit > maxLimit {
-			*limit = defaultLimit
-		}
+	} else if *limit <= 0 || *limit > maxLimit {
+		return []domain.Comment{}, errors.New("invalid value of limit")
 	}
 	if offset == nil {
 		*dOffset = defaultOffset
 		offset = dOffset
+	}
+
+	// Проверка родительского комментария
+	if _, exists := s.commentRepo.GetByID(ctx, commentID); !exists {
+		return []domain.Comment{}, errors.New("parent comment not found")
 	}
 	return s.commentRepo.GetReplies(ctx, commentID, *limit, *offset)
 }

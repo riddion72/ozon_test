@@ -7,6 +7,7 @@ import (
 	"github.com/jmoiron/sqlx"
 	"github.com/riddion72/ozon_test/internal/domain"
 	"github.com/riddion72/ozon_test/internal/logger"
+	dbErrors "github.com/riddion72/ozon_test/pkg/utils/dbErorrs"
 )
 
 type PostRepository struct {
@@ -14,55 +15,60 @@ type PostRepository struct {
 }
 
 func NewPostRepository(db *sqlx.DB) *PostRepository {
+	err := db.Ping()
+	if err != nil {
+		logger.Debug("Failed to create post",
+			slog.String("error", err.Error()))
+	}
 	return &PostRepository{db: db}
 }
 
-func (r *PostRepository) Create(ctx context.Context, post domain.Post) error {
+func (r *PostRepository) Create(ctx context.Context, post *domain.Post) (*domain.Post, error) {
 	query := `
-		INSERT INTO posts (id, title, user_id, content, comments_allowed, created_at)
-		VALUES (:id, :title, :user_id, :content, :comments_allowed, :created_at)`
+		INSERT INTO posts (title, author, content, comments_allowed)
+		VALUES ($1, $2, $3, $4)
+		RETURNING *`
 
-	_, err := r.db.NamedExecContext(context.Background(), query,
-		map[string]interface{}{
-			"id":               post.ID,
-			"title":            post.Title,
-			"user_id":          post.User,
-			"content":          post.Content,
-			"comments_allowed": post.CommentsAllowed,
-			"created_at":       post.CreatedAt,
-		})
+	err := r.db.QueryRowxContext(ctx, query,
+		post.Title, post.User, post.Content, post.CommentsAllowed,
+	).Scan(&post.ID, &post.Title, &post.User, &post.Content, &post.CommentsAllowed, &post.CreatedAt)
 
 	if err != nil {
-		logger.Error("Failed to create post",
-			slog.String("error", err.Error()),
-			slog.Int("post_id", post.ID))
-		return err
+		logger.Error("Failed to create post", slog.String("error", err.Error()), slog.Int("post_id", post.ID))
+		err = dbErrors.PrepareError(err)
+		return nil, err
 	}
-	return nil
+	return post, nil
 }
 
-func (r *PostRepository) GetByID(ctx context.Context, id int) (domain.Post, bool) {
+func (r *PostRepository) GetByID(ctx context.Context, postID int) (domain.Post, bool) {
 	var post domain.Post
 	query := `SELECT * FROM posts WHERE id = $1`
 
-	err := r.db.Get(&post, query, id)
+	err := r.db.QueryRowxContext(ctx, query, postID).Scan(
+		&post.ID,
+		&post.Title,
+		&post.User,
+		&post.Content,
+		&post.CommentsAllowed,
+		&post.CreatedAt)
 	if err != nil {
-		logger.Debug("Post not found", slog.Int("post_id", id))
+		logger.Debug("Post not found", slog.String("error", err.Error()), slog.Int("post_id", postID))
 		return domain.Post{}, false
 	}
 	return post, true
 }
 
-func (r *PostRepository) List(ctx context.Context, limit, offset int) []domain.Post {
+func (r *PostRepository) List(ctx context.Context, limit, offset int) ([]domain.Post, error) {
 	rows, err := r.db.QueryContext(
 		context.Background(),
-		`SELECT id, title, user_id, content, comments_allowed, created_at 
-         FROM posts ORDER BY created_at DESC LIMIT $1 OFFSET $2`,
+		`SELECT id, title, author, content, comments_allowed, created_at 
+         FROM posts LIMIT $1 OFFSET $2`,
 		limit, offset,
 	)
 
 	if err != nil {
-		return nil
+		return nil, err
 	}
 	defer rows.Close()
 
@@ -76,14 +82,20 @@ func (r *PostRepository) List(ctx context.Context, limit, offset int) []domain.P
 			posts = append(posts, post)
 		}
 	}
-	return posts
+	return posts, nil
 }
 
 func (r *PostRepository) CommentsAllowed(ctx context.Context, postID int, commentsAllowed bool) (*domain.Post, error) {
+	var post domain.Post
 	query := `UPDATE posts SET comments_allowed = $1 WHERE id = $2 RETURNING *`
 
-	var post domain.Post
-	err := r.db.Get(&post, query, commentsAllowed, postID)
+	err := r.db.QueryRowxContext(ctx, query, commentsAllowed, postID).Scan(
+		&post.ID,
+		&post.Title,
+		&post.User,
+		&post.Content,
+		&post.CommentsAllowed,
+		&post.CreatedAt)
 	if err != nil {
 		logger.Error("Failed to update comments allowed status",
 			slog.String("error", err.Error()),

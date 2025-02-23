@@ -11,14 +11,14 @@ type Config struct {
 	Server `yaml:"server"`
 	DB     `yaml:"db"`
 	Logger `yaml:"logger"`
-	Secret string `yaml:"secret"`
 }
 
 type Server struct {
 	Address         string        `yaml:"address" env-default:":8080"`
 	Timeout         time.Duration `yaml:"timeout" env-default:"4s"`
-	IdleTimeout     time.Duration `yaml:"idle_timeout" env-default:"60s"`
-	ShutdownTimeout time.Duration `yaml:"shutdown_timeout" env-default:"10s"`
+	IddleTimeout    time.Duration `yaml:"iddletimeout" env-default:"60s"`
+	ShutdownTimeout time.Duration `yaml:"shutdowntimeout" env-default:"10s"`
+	ComplexityLimit int           `yaml:"complexitylimit" env-default:"100"`
 }
 
 type DB struct {

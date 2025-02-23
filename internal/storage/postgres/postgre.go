@@ -1,13 +1,13 @@
 package postgres
 
 import (
-	"context"
 	"fmt"
 	"log/slog"
 	"time"
 
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
+
 	"github.com/riddion72/ozon_test/internal/config"
 	"github.com/riddion72/ozon_test/internal/logger"
 )
@@ -17,15 +17,15 @@ const (
 	retryDelay = 5 * time.Second
 )
 
-func ConnectWithRetries(ctx context.Context, cfg config.DB) (*sqlx.DB, error) {
+func ConnectWithRetries(cfg config.DB) (*sqlx.DB, error) {
 	var db *sqlx.DB
 	var err error
 
 	dsn := fmt.Sprintf("host=%s port=%s user=%s dbname=%s password=%s sslmode=disable",
 		cfg.Host, cfg.Port, cfg.Username, cfg.Name, cfg.Password)
-
+	logger.Debug("preparing connect to PostgreSQL", slog.String("dsn", dsn))
 	for i := 0; i < maxRetries; i++ {
-		db, err = sqlx.ConnectContext(ctx, "postgres", dsn)
+		db, err = sqlx.Open("postgres", dsn)
 		if err == nil {
 			if err = db.Ping(); err == nil {
 				logger.Info("Successfully connected to PostgreSQL",

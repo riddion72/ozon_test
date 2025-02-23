@@ -46,7 +46,7 @@ type Notifier interface {
 
 // PostService интерфейс для работы с постами
 type PostService interface {
-	Create(ctx context.Context, post domain.Post) error
+	Create(ctx context.Context, post *domain.Post) (*domain.Post, error)
 	GetPostByID(ctx context.Context, id int) (domain.Post, bool)
 	GetPosts(ctx context.Context, limit, offset int) ([]domain.Post, error)
 	CloseComments(ctx context.Context, user string, postID int, commentsAllowed bool) (*domain.Post, error)
@@ -54,7 +54,7 @@ type PostService interface {
 
 // CommentService интерфейс для работы с коментами
 type CommentService interface {
-	Create(ctx context.Context, comment domain.Comment) error
+	Create(ctx context.Context, comment *domain.Comment) (*domain.Comment, error)
 	GetCommentsByPostID(ctx context.Context, postID int, limit, offset *int) ([]domain.Comment, error)
 	GetReplies(ctx context.Context, commentID int, limit *int, offset *int) ([]domain.Comment, error)
 }

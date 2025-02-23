@@ -3,8 +3,9 @@ logger:
 server:
   address: ":8081"
   timeout: 4s
-  iddle_timeout: 60s
-  shutdown_timeout: 10s
+  iddletimeout: 40s
+  shutdowntimeout: 10s
+  complexitylimit: 1000
 db:
   host: "postgres_db"
   port: 5432
