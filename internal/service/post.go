@@ -29,7 +29,7 @@ func (s *postService) Create(ctx context.Context, post *domain.Post) (*domain.Po
 
 	createdPost, err := s.repo.Create(ctx, post)
 	if err != nil {
-		logger.Error("Failed to create post", slog.String("func", f), slog.String("title", post.Title), slog.String("user", post.User), slog.String("error", err.Error()))
+		logger.Error("Failed to create post", slog.String("func", f), slog.String("title", post.Title), slog.String("error", err.Error()))
 		return nil, err
 	}
 	logger.Info("Post created successfully", slog.String("func", f), slog.Int("postID", createdPost.ID))
@@ -66,7 +66,7 @@ func (s *postService) GetPosts(ctx context.Context, limit, offset int) ([]domain
 
 func (s *postService) CloseComments(ctx context.Context, user string, postID int, commentsAllowed bool) (*domain.Post, error) {
 	const f = "service.CloseComments"
-	logger.Info("Closing comments for post", slog.String("func", f), slog.Int("postID", postID), slog.String("user", user))
+	logger.Info("Closing comments for post", slog.String("func", f), slog.Int("postID", postID))
 
 	post, exist := s.repo.GetByID(ctx, postID)
 	if !exist {
@@ -75,7 +75,7 @@ func (s *postService) CloseComments(ctx context.Context, user string, postID int
 	}
 
 	if post.User != user {
-		logger.Warn("Access denied", slog.String("func", f), slog.Int("postID", postID), slog.String("user", user))
+		logger.Warn("Access denied", slog.String("func", f), slog.Int("postID", postID))
 		return nil, errors.New("access denied")
 	}
 

@@ -33,7 +33,7 @@ func NewCommentService(
 
 func (s *commentService) Create(ctx context.Context, comment *domain.Comment) (*domain.Comment, error) {
 	const f = "commentService.Create"
-	logger.Info("Creating comment", slog.String("func", f), slog.Int("postID", comment.PostID), slog.String("user", comment.User))
+	logger.Info("Creating comment", slog.String("func", f), slog.Int("postID", comment.PostID))
 	if len(comment.Text) > 2000 {
 		return nil, errors.New("comment exceeds 2000 characters")
 	}
@@ -65,7 +65,7 @@ func (s *commentService) Create(ctx context.Context, comment *domain.Comment) (*
 
 	createdComment, err := s.commentRepo.Create(ctx, comment)
 	if err != nil {
-		logger.Error("Failed to create comment", slog.String("func", f), slog.Int("postID", comment.PostID), slog.String("user", comment.User), slog.String("error", err.Error()))
+		logger.Error("Failed to create comment", slog.String("func", f), slog.Int("postID", comment.PostID), slog.String("error", err.Error()))
 		return nil, err
 	}
 

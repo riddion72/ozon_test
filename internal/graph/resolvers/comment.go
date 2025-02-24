@@ -2,7 +2,6 @@ package resolvers
 
 import (
 	"context"
-	"fmt"
 	"log/slog"
 
 	"github.com/riddion72/ozon_test/internal/domain"
@@ -27,7 +26,7 @@ func (r *commentResolver) ParentID(ctx context.Context, obj *domain.Comment) (*i
 }
 
 func (r *commentResolver) Replies(ctx context.Context, obj *domain.Comment, limit *int, offset *int) ([]domain.Comment, error) {
-	logger.Info("Fetching replies for comment", slog.Int("commentID", obj.ID), slog.String("paginete", fmt.Sprintf("limit %v offset %v", limit, offset)))
+	logger.Info("Fetching replies for comment", slog.Int("commentID", obj.ID))
 	replies, err := r.CommentsSrvs.GetReplies(ctx, obj.ID, limit, offset)
 	if err != nil {
 		logger.Error("Failed to fetch replies", slog.Int("commentID", obj.ID), slog.String("error", err.Error()))
