@@ -5,15 +5,17 @@ import (
 	"testing"
 	"time"
 
-	"github.com/riddion72/ozon_test/internal/domain"
-	"github.com/riddion72/ozon_test/internal/storage/inmemory"
-
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/riddion72/ozon_test/internal/domain"
+	"github.com/riddion72/ozon_test/internal/logger"
+	"github.com/riddion72/ozon_test/internal/storage/inmemory"
 )
 
 func TestCommentRepo_Create(t *testing.T) {
 	ctx := context.Background()
+	logger.MustInit("prod")
 
 	t.Run("Create comment", func(t *testing.T) {
 		repo := inmemory.NewCommentRepo()

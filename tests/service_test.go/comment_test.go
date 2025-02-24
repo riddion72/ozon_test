@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/riddion72/ozon_test/internal/domain"
+	"github.com/riddion72/ozon_test/internal/logger"
 	"github.com/riddion72/ozon_test/internal/service"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -43,6 +44,7 @@ func (m *MockCommentStorage) GetReplies(ctx context.Context, commentID int, limi
 func ptr(i int) *int { return &i }
 
 func TestCommentService(t *testing.T) {
+	logger.MustInit("local")
 	mockCommentRepo := new(MockCommentStorage)
 	mockPostRepo := new(MockPostStorage)
 	commentService := service.NewCommentService(mockCommentRepo, mockPostRepo)

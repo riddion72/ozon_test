@@ -8,7 +8,7 @@ import (
 	"github.com/jmoiron/sqlx"
 	"github.com/riddion72/ozon_test/internal/domain"
 	"github.com/riddion72/ozon_test/internal/logger"
-	dbErrors "github.com/riddion72/ozon_test/pkg/utils/dbErorrs"
+	utils "github.com/riddion72/ozon_test/pkg/utils"
 )
 
 type CommentRepo struct {
@@ -16,11 +16,6 @@ type CommentRepo struct {
 }
 
 func NewCommentRepository(db *sqlx.DB) *CommentRepo {
-	err := db.Ping()
-	if err != nil {
-		logger.Debug("Failed to create post",
-			slog.String("error", err.Error()))
-	}
 	return &CommentRepo{db: db}
 }
 
@@ -34,10 +29,12 @@ func (r *CommentRepo) Create(ctx context.Context, comment *domain.Comment) (*dom
 	).Scan(&comment.ID, &comment.User, &comment.PostID, &comment.ParentID, &comment.Text, &comment.CreatedAt)
 
 	if err != nil {
-		return nil, dbErrors.PrepareError(err)
+		logger.Error("Failed to create comment", slog.String("error", err.Error()))
+		return nil, utils.PrepareError(err)
 	}
 
-	return comment, err
+	logger.Info("Comment created", slog.Int("commentID", comment.ID), slog.Int("postID", comment.PostID))
+	return comment, nil
 }
 
 func (r *CommentRepo) GetByID(ctx context.Context, id int) (domain.Comment, bool) {
@@ -53,13 +50,14 @@ func (r *CommentRepo) GetByID(ctx context.Context, id int) (domain.Comment, bool
 	)
 
 	if err == sql.ErrNoRows {
-		logger.Debug("GetByID ErrNoRows", slog.String("error", err.Error()))
+		logger.Warn("Comment not found", slog.Int("commentID", id))
 		return comment, false
 	} else if err != nil {
-		logger.Debug("GetByID", slog.String("error", err.Error()))
+		logger.Error("Error fetching comment by ID", slog.String("error", err.Error()))
 		return comment, false
 	}
 
+	logger.Info("Fetched comment by ID", slog.Int("commentID", id))
 	return comment, true
 }
 
@@ -74,7 +72,8 @@ func (r *CommentRepo) GetByPostID(ctx context.Context, postID int, limit, offset
 	)
 
 	if err != nil {
-		return nil, dbErrors.PrepareError(err)
+		logger.Error("Failed to fetch comments by post ID", slog.String("error", err.Error()))
+		return nil, utils.PrepareError(err)
 	}
 	defer rows.Close()
 
@@ -85,12 +84,14 @@ func (r *CommentRepo) GetByPostID(ctx context.Context, postID int, limit, offset
 			&comment.ID, &comment.User, &comment.PostID, &comment.ParentID,
 			&comment.Text, &comment.CreatedAt,
 		); err != nil {
-			return nil, dbErrors.PrepareError(err)
+			logger.Error("Error scanning comment", slog.String("error", err.Error()))
+			return nil, utils.PrepareError(err)
 		}
 		if comment.ParentID == nil {
 			comments = append(comments, comment)
 		}
 	}
+	logger.Info("Fetched comments by post ID", slog.Int("postID", postID), slog.Int("count", len(comments)))
 	return comments, nil
 }
 
@@ -105,7 +106,8 @@ func (r *CommentRepo) GetReplies(ctx context.Context, commentID int, limit int, 
 	)
 
 	if err != nil {
-		return nil, dbErrors.PrepareError(err)
+		logger.Error("Failed to fetch replies", slog.String("error", err.Error()))
+		return nil, utils.PrepareError(err)
 	}
 
 	defer rows.Close()
@@ -119,7 +121,8 @@ func (r *CommentRepo) GetReplies(ctx context.Context, commentID int, limit int, 
 		); err == nil {
 			comments = append(comments, comment)
 		} else {
-			return nil, dbErrors.PrepareError(err)
+			logger.Error("Error scanning reply", slog.String("error", err.Error()))
+			return nil, utils.PrepareError(err)
 		}
 	}
 	return comments, nil
@@ -134,8 +137,10 @@ func (r *CommentRepo) CheckCommentUnderPost(ctx context.Context, postID, comment
 	err := r.db.QueryRowxContext(ctx, query, commentID, postID).Scan(&exists)
 
 	if err != nil {
-		return false, dbErrors.PrepareError(err)
+		logger.Error("Failed to check if comment under post", slog.Int("postID", postID), slog.Int("commentID", commentID), slog.String("error", err.Error()))
+		return false, utils.PrepareError(err)
 	}
 
+	logger.Info("Checked comment under post", slog.Int("postID", postID), slog.Int("commentID", commentID), slog.Bool("exists", exists))
 	return exists, nil
 }

@@ -2,10 +2,12 @@ package inmemory
 
 import (
 	"context"
+	"log/slog"
 	"sync"
 	"time"
 
 	"github.com/riddion72/ozon_test/internal/domain"
+	"github.com/riddion72/ozon_test/internal/logger"
 	"github.com/riddion72/ozon_test/internal/storage/inmemory/tools"
 )
 
@@ -25,6 +27,7 @@ func NewCommentRepo() *CommentRepo {
 }
 
 func (r *CommentRepo) Create(ctx context.Context, comment *domain.Comment) (*domain.Comment, error) {
+	const f = "inmemory.CommentRepo.Create"
 	r.Lock()
 	defer r.Unlock()
 
@@ -35,18 +38,24 @@ func (r *CommentRepo) Create(ctx context.Context, comment *domain.Comment) (*dom
 	if comment.ParentID != nil {
 		r.repliers[*comment.ParentID] = append(r.repliers[*comment.ParentID], comment.ID)
 	}
+	logger.Info("Comment created", slog.String("func", f), slog.Int("commentID", comment.ID))
 	return comment, nil
 }
 
 func (r *CommentRepo) GetByID(ctx context.Context, id int) (domain.Comment, bool) {
+	const f = "inmemory.CommentRepo.GetByID"
 	r.RLock()
 	defer r.RUnlock()
 
 	comment, exists := r.comments[id]
+	if !exists {
+		logger.Warn("Comment not found", slog.String("func", f), slog.Int("commentID", id))
+	}
 	return comment, exists
 }
 
 func (r *CommentRepo) GetByPostID(ctx context.Context, postID int, limit, offset int) ([]domain.Comment, error) {
+	const f = "inmemory.CommentRepo.GetByPostID"
 	r.RLock()
 	defer r.RUnlock()
 
@@ -61,10 +70,12 @@ func (r *CommentRepo) GetByPostID(ctx context.Context, postID int, limit, offset
 		}
 	}
 	ans := tools.Paginate(commentsSlice, limit, offset)
+	logger.Info("Fetched comments by post ID", slog.String("func", f), slog.Int("postID", postID), slog.Int("count", len(ans)))
 	return ans, nil
 }
 
 func (r *CommentRepo) GetReplies(ctx context.Context, commentID int, limit, offset int) ([]domain.Comment, error) {
+	const f = "inmemory.CommentRepo.GetReplies"
 	r.RLock()
 	defer r.RUnlock()
 
@@ -78,14 +89,17 @@ func (r *CommentRepo) GetReplies(ctx context.Context, commentID int, limit, offs
 		comments = append(comments, r.comments[id])
 	}
 	ans := tools.Paginate(comments, limit, offset)
+	logger.Info("Fetched replies for comment", slog.String("func", f), slog.Int("commentID", commentID), slog.Int("count", len(ans)))
 	return ans, nil
 }
 
 func (r *CommentRepo) CheckCommentUnderPost(ctx context.Context, postID, commentID int) (bool, error) {
+	const f = "inmemory.CommentRepo.CheckCommentUnderPost"
 	r.RLock()
 	defer r.RUnlock()
 	comment, exist := r.comments[commentID]
 	if !exist {
+		logger.Warn("No replies found for comment", slog.String("func", f), slog.Int("commentID", commentID))
 		return false, nil
 	}
 

@@ -14,7 +14,6 @@ func main() {
 	configPath := flag.String("config", "config/config.yaml", "config file path")
 	flag.Parse()
 
-	logger.Info("Loading config", slog.String("config_path", *configPath))
 	cfg, err := config.ParseConfig(*configPath)
 	if err != nil {
 		log.Fatalf("Error parsing config: %v", err)

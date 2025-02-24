@@ -7,14 +7,14 @@ import (
 	"github.com/riddion72/ozon_test/internal/graph/generated"
 )
 
-// Resolver корневая структура для всех резолверов
+// структура для всех резолверов
 type Resolver struct {
 	PostsSrvc    PostService
 	CommentsSrvs CommentService
 	Notifier     Notifier
 }
 
-// NewResolver конструктор для Resolver
+// конструктор для Resolvera
 func NewResolver(posts PostService, comments CommentService, notifier Notifier) *Resolver {
 	return &Resolver{
 		PostsSrvc:    posts,
@@ -44,7 +44,7 @@ type Notifier interface {
 	Notify(postID int, comment *domain.Comment)
 }
 
-// PostService интерфейс для работы с постами
+// интерфейс для работы с постами
 type PostService interface {
 	Create(ctx context.Context, post *domain.Post) (*domain.Post, error)
 	GetPostByID(ctx context.Context, id int) (domain.Post, bool)
@@ -52,7 +52,7 @@ type PostService interface {
 	CloseComments(ctx context.Context, user string, postID int, commentsAllowed bool) (*domain.Post, error)
 }
 
-// CommentService интерфейс для работы с коментами
+// интерфейс для работы с коментами
 type CommentService interface {
 	Create(ctx context.Context, comment *domain.Comment) (*domain.Comment, error)
 	GetCommentsByPostID(ctx context.Context, postID int, limit, offset *int) ([]domain.Comment, error)

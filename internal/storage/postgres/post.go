@@ -2,12 +2,13 @@ package postgres
 
 import (
 	"context"
+	"database/sql"
 	"log/slog"
 
 	"github.com/jmoiron/sqlx"
 	"github.com/riddion72/ozon_test/internal/domain"
 	"github.com/riddion72/ozon_test/internal/logger"
-	dbErrors "github.com/riddion72/ozon_test/pkg/utils/dbErorrs"
+	utils "github.com/riddion72/ozon_test/pkg/utils"
 )
 
 type PostRepository struct {
@@ -15,11 +16,6 @@ type PostRepository struct {
 }
 
 func NewPostRepository(db *sqlx.DB) *PostRepository {
-	err := db.Ping()
-	if err != nil {
-		logger.Debug("Failed to create post",
-			slog.String("error", err.Error()))
-	}
 	return &PostRepository{db: db}
 }
 
@@ -35,9 +31,10 @@ func (r *PostRepository) Create(ctx context.Context, post *domain.Post) (*domain
 
 	if err != nil {
 		logger.Error("Failed to create post", slog.String("error", err.Error()), slog.Int("post_id", post.ID))
-		err = dbErrors.PrepareError(err)
+		err = utils.PrepareError(err)
 		return nil, err
 	}
+	logger.Info("Post created", slog.Int("postID", post.ID), slog.String("title", post.Title))
 	return post, nil
 }
 
@@ -53,9 +50,14 @@ func (r *PostRepository) GetByID(ctx context.Context, postID int) (domain.Post, 
 		&post.CommentsAllowed,
 		&post.CreatedAt)
 	if err != nil {
-		logger.Debug("Post not found", slog.String("error", err.Error()), slog.Int("post_id", postID))
+		if err == sql.ErrNoRows {
+			logger.Warn("Post not found", slog.String("error", err.Error()), slog.Int("post_id", postID))
+			return domain.Post{}, false
+		}
+		logger.Error("Error fetching post by ID", slog.String("error", err.Error()), slog.Int("post_id", postID))
 		return domain.Post{}, false
 	}
+	logger.Info("Fetched post by ID", slog.Int("postID", postID))
 	return post, true
 }
 
@@ -68,6 +70,7 @@ func (r *PostRepository) List(ctx context.Context, limit, offset int) ([]domain.
 	)
 
 	if err != nil {
+		logger.Error("Failed to fetch posts", slog.String("error", err.Error()))
 		return nil, err
 	}
 	defer rows.Close()
@@ -82,6 +85,7 @@ func (r *PostRepository) List(ctx context.Context, limit, offset int) ([]domain.
 			posts = append(posts, post)
 		}
 	}
+	logger.Info("Fetched posts", slog.Int("count", len(posts)))
 	return posts, nil
 }
 
@@ -102,5 +106,6 @@ func (r *PostRepository) CommentsAllowed(ctx context.Context, postID int, commen
 			slog.Int("post_id", postID))
 		return nil, err
 	}
+	logger.Info("Updated comments allowed status", slog.Int("post_id", postID), slog.Bool("commentsAllowed", commentsAllowed))
 	return &post, nil
 }

@@ -1,4 +1,4 @@
-package dbErrors
+package utils
 
 import (
 	"database/sql"
