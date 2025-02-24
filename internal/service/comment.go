@@ -69,7 +69,6 @@ func (s *commentService) Create(ctx context.Context, comment *domain.Comment) (*
 		return nil, err
 	}
 
-	logger.Info("Comment created successfully", slog.Int("commentID", createdComment.ID))
 	return createdComment, nil
 }
 
