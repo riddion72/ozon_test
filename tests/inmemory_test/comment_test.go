@@ -314,5 +314,4 @@ func TestCheckCommentUnderPost(t *testing.T) {
 	}
 }
 
-// Вспомогательная функция для создания указателей
 func ptr(i int) *int { return &i }

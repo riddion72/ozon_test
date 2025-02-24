@@ -1,10 +1,7 @@
 package complexity
 
 import (
-	"log/slog"
-
 	"github.com/riddion72/ozon_test/internal/graph/model"
-	"github.com/riddion72/ozon_test/internal/logger"
 )
 
 type Complexity struct {
@@ -46,42 +43,43 @@ type Complexity struct {
 	}
 }
 
+// TO DO дописать все поля, настроить вес
 func NewComplexity() *Complexity {
 	c := &Complexity{}
 
-	logger.Info("NewComplexity run")
+	// logger.Debug("NewComplexity run")
 	c.Comment.CreatedAt = func(childComplexity int) int {
-		logger.Info("calculate complexity", slog.Int("c.Comment.CreatedAt", childComplexity))
+		// logger.Debug("calculate complexity", slog.Int("c.Comment.CreatedAt", childComplexity+1))
 		return 1 + childComplexity
 	}
 
 	c.Comment.ID = func(childComplexity int) int {
-		logger.Info("calculate complexity", slog.Int("c.Comment.CreatedAt", childComplexity))
+		// logger.Debug("calculate complexity", slog.Int("c.Comment.CreatedAt", childComplexity+1))
 		return 1 + childComplexity
 	}
 
 	c.Comment.Replies = func(childComplexity int, limit *int, offset *int) int {
-		logger.Info("calculate complexity", slog.Int("c.Comment.ID", childComplexity))
+		// logger.Debug("calculate complexity", slog.Int("c.Comment.ID", childComplexity+2))
 		return 2 + childComplexity
 	}
 
 	c.Mutation.CreateComment = func(childComplexity int, input model.NewComment) int {
-		logger.Info("calculate complexity", slog.Int("c.Mutation.CreateComment", childComplexity))
+		// logger.Debug("calculate complexity", slog.Int("c.Mutation.CreateComment", childComplexity+1))
 		return 1 + childComplexity
 	}
 
 	c.Post.Comments = func(childComplexity int, limit *int, offset *int) int {
-		logger.Info("calculate complexity", slog.Int("c.Post.Comments", childComplexity))
+		// logger.Debug("calculate complexity", slog.Int("c.Post.Comments", childComplexity+2))
 		return 2 + childComplexity
 	}
 
 	c.Query.Posts = func(childComplexity int, limit int, offset int) int {
-		logger.Info("calculate complexity", slog.Int("c.Query.Posts", childComplexity))
+		// logger.Debug("calculate complexity", slog.Int("c.Query.Posts", childComplexity+1))
 		return 1 + childComplexity
 	}
 
 	c.Subscription.CommentAdded = func(childComplexity int, postID int) int {
-		logger.Info("calculate complexity", slog.Int("c.Subscription.CommentAdded", childComplexity))
+		// logger.Debug("calculate complexity", slog.Int("c.Subscription.CommentAdded", childComplexity+1))
 		return 1 + childComplexity
 	}
 

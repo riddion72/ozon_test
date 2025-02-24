@@ -26,7 +26,7 @@ type GQLServer struct {
 	httpServer *http.Server
 }
 
-func New(config config.Server, resolver *resolvers.Resolver) *GQLServer {
+func NewServer(config config.Server, resolver *resolvers.Resolver) *GQLServer {
 
 	cmplx := complexity.NewComplexity
 
@@ -70,9 +70,9 @@ func (a *GQLServer) run() error {
 	signal.Notify(done, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
 
 	go func() {
-		logger.Info("Starting server", slog.String("func", f), slog.String("address", a.cfg.Address))
 		if err := a.httpServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			logger.Error("Failed to start server", slog.String("func", f), slog.String("error", err.Error()))
+			logger.Error("Failed to start server", slog.String("func", f),
+				slog.String("error", err.Error()), slog.String("address", a.cfg.Address))
 			os.Exit(1)
 		}
 	}()
@@ -80,6 +80,7 @@ func (a *GQLServer) run() error {
 	logger.Info("GraphQL server started", slog.String("func", f), slog.String("port", a.cfg.Address))
 
 	<-done
+	logger.Info("Received shutdown signal", slog.String("func", f))
 	logger.Info("Shutting down server...")
 
 	if err := a.Shutdown(); err != nil {
@@ -91,7 +92,9 @@ func (a *GQLServer) run() error {
 }
 
 func (a *GQLServer) MustRun() {
+	const f = "gqlserver.MustRun"
 	if err := a.run(); err != nil {
+		logger.Error("Server run failed", slog.String("func", f), slog.String("error", err.Error()))
 		panic(err)
 	}
 }

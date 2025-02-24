@@ -17,7 +17,6 @@ func NewPostService(repo storage.PostStorage) *postService {
 }
 
 func (s *postService) Create(ctx context.Context, post *domain.Post) (*domain.Post, error) {
-	// Валидация данных поста
 	if post.Title == "" || post.Content == "" {
 		return nil, errors.New("invalid post data")
 	}
